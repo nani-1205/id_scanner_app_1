@@ -4,7 +4,7 @@
 <div class="container">
     <h1 class="my-4">Upload Document for OCR</h1>
 
-    <!-- Single File Upload -->
+    <!-- Option 1: Single File Upload -->
     <div class="card mb-4">
         <div class="card-header">
             <h3>Option 1: Upload a Single PDF or Image</h3>
@@ -20,8 +20,8 @@
         </div>
     </div>
 
-    <!-- Two-Sided Image Upload -->
-    <div class="card">
+    <!-- Option 2: Two-Sided Image Upload -->
+    <div class="card mb-4">
         <div class="card-header">
             <h3>Option 2: Upload Two Images (e.g., ID Card Front and Back)</h3>
         </div>
@@ -39,5 +39,93 @@
             </form>
         </div>
     </div>
+
+    <!-- Option 3: Camera Capture Section -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Option 3: Capture Image from Camera</h3>
+        </div>
+        <div class="card-body">
+            <div id="camera-container" class="text-center">
+                <button id="start-camera" class="btn btn-secondary mb-3">Start Camera</button>
+                <div id="video-container" style="display:none;">
+                    <video id="video" width="640" height="480" autoplay class="border rounded"></video>
+                    <br>
+                    <button id="click-photo" class="btn btn-primary mt-3">Snap Photo</button>
+                </div>
+                <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+            </div>
+            <div id="loading-spinner" style="display:none;" class="text-center mt-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p>Processing image, please wait...</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- JavaScript for the Camera Feature -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const startCameraButton = document.getElementById('start-camera');
+    const videoContainer = document.getElementById('video-container');
+    const clickPhotoButton = document.getElementById('click-photo');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    let stream;
+
+    startCameraButton.addEventListener('click', async () => {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            video.srcObject = stream;
+            videoContainer.style.display = 'block';
+            startCameraButton.style.display = 'none';
+        } catch (err) {
+            console.error("Error accessing camera: ", err);
+            alert("Could not access the camera. Please ensure you have given permission.");
+        }
+    });
+
+    clickPhotoButton.addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        videoContainer.style.display = 'none';
+        loadingSpinner.style.display = 'block';
+
+        canvas.toBlob((blob) => {
+            const formData = new FormData();
+            formData.append('single_file', blob, 'capture.jpg');
+
+            fetch("{{ url_for('upload_from_form') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok && response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    response.text().then(text => {
+                        console.error('Upload failed:', text);
+                        alert('Image upload failed. Please check the console for details.');
+                        loadingSpinner.style.display = 'none';
+                        startCameraButton.style.display = 'block';
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during upload. Please check the console.');
+                loadingSpinner.style.display = 'none';
+                startCameraButton.style.display = 'block';
+            });
+        }, 'image/jpeg');
+    });
+});
+</script>
 {% endblock %}
