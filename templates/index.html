@@ -1,0 +1,43 @@
+<!-- templates/index.html -->
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Upload Document for OCR</h1>
+
+    <!-- Single File Upload -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Option 1: Upload a Single PDF or Image</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('upload_from_form') }}" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="single_file" class="form-label">Select PDF or Image File</label>
+                    <input class="form-control" type="file" id="single_file" name="single_file" accept=".pdf,.png,.jpg,.jpeg">
+                </div>
+                <button type="submit" class="btn btn-primary">Upload and Process</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Two-Sided Image Upload -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Option 2: Upload Two Images (e.g., ID Card Front and Back)</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('upload_from_form') }}" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="side1_file" class="form-label">Side 1 Image</label>
+                    <input class="form-control" type="file" id="side1_file" name="side1_file" accept=".png,.jpg,.jpeg" required>
+                </div>
+                <div class="mb-3">
+                    <label for="side2_file" class="form-label">Side 2 Image</label>
+                    <input class="form-control" type="file" id="side2_file" name="side2_file" accept=".png,.jpg,.jpeg" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Combine, Upload, and Process</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
